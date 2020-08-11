@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    android:layout_marginTop="10dp"
+    android:gravity="center">
+
+    <ImageView
+        android:id="@+id/iv_server"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_centerInParent="true"
+        android:scaleType="center"
+        android:src="@drawable/ic_launcher_background" />
+
+
+    <ProgressBar
+        android:id="@+id/bar_image"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerInParent="true"
+        android:indeterminateTint="#ffffff"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tv_download"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="load"
+        android:textColor="#B71C1C"
+        android:textSize="25sp" />
+
+</RelativeLayout>
