@@ -11,8 +11,9 @@ interface ApiInterface {
     @GET("/photos/")
     fun getPhotos(
         @Query("page") page: Int = 1,
-        @Query("per_page") perPage: Int = 10,
+        @Query("per_page") perPage: Int = 8,
         @Query("client_id") clientID: String = "ZCrQRuxnXBxzR_sl0WeHvj9nMEdw5y-ySr5wbWDp7Sw"
+//    ): ArrayList<UnsplashPhoto?>
     ): Observable<ArrayList<UnsplashPhoto?>>
 
 

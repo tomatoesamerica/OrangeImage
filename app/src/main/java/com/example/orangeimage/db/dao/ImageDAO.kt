@@ -12,9 +12,11 @@ interface ImageDAO {
     fun getUserById(id: Int): Flowable<Image>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+//    fun insert(image: Image)
     fun insert(image: Image): Completable
 
     @Query("SELECT * FROM images")
+//    fun getAll(): List<Image>
     fun getAll(): Flowable<List<Image>>
 
     @Delete

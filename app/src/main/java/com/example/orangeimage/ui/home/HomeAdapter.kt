@@ -19,6 +19,9 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.Consumer
 import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class HomeAdapter(var context: Context) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -44,7 +47,7 @@ class HomeAdapter(var context: Context) : RecyclerView.Adapter<RecyclerView.View
 
     fun setData(list: ArrayList<UnsplashPhoto?>) {
         imageOranges = list
-        notifyDataSetChanged()
+//        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -98,34 +101,42 @@ class HomeAdapter(var context: Context) : RecyclerView.Adapter<RecyclerView.View
         fun bind(item: UnsplashPhoto, position: Int, imageDB: ImageDatabase) {
             Glide.with(itemView.context).load(item.urls.thumb).into(iv)
 
-            Log.d("001", "bind: ")
-//            if (checkVisible(item.id, imageDB)) {
-//                tv_load.visibility = View.GONE
-//                bar_item.visibility = View.GONE
+            Log.d("001", "bind: " + position)
+
+//            CoroutineScope(Dispatchers.Default).launch {
+//                var list: List<Image> = imageDB.imageDAO().getAll()
+//                for (ite in list) {
+//                    if (TextUtils.equals(ite.url, item.id)) {
+//                        Log.d("001", "bind save: " + position + "${ite.url}")
+//                        bar_item.visibility = View.GONE
+//                        tv_load.visibility = View.GONE
+//
+//                        break
+//                    }
+//                }
 //            }
 
-//            checkVisible(item.id, imageDB)
+                imageDB.imageDAO().getAll()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        Consumer { arrImage: List<Image> ->
+                            for (ite in arrImage) {
+                                if (TextUtils.equals(ite.url, item.id)) {
+                                    Log.d("001", "bind save: " + position + "${ite.url}")
+//                                Log.d("001", "bind: " + ite.uri + "     " + ite.url)
+                                    tv_load.visibility = View.GONE
+                                    bar_item.visibility = View.GONE
+                                    break
+                                }
+                            }
+                        }
+                    )
+
             iv.setOnClickListener(View.OnClickListener {
                 imageCallback.onSaveImage(item, position)
                 bar_item.visibility = View.VISIBLE
             })
-        }
-
-        fun checkVisible(id: String, imageDB: ImageDatabase) : Boolean{
-            var listID: ArrayList<Image> = ArrayList()
-
-            imageDB.imageDAO().getAll()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    Consumer { arrImage: List<Image> ->
-                        for (item in arrImage) {
-                            listID.add(item)
-                            Log.d("001", "checkVisible: " + item.id)
-                        }
-                    }
-                )
-
         }
 
     }

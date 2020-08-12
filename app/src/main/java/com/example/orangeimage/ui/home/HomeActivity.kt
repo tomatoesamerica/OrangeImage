@@ -31,14 +31,23 @@ import com.example.orangeimage.db.entity.Image
 import com.example.orangeimage.ui.list.ListImageActivity
 import com.example.orangeimage.utils.MediaStoreUtils
 import com.unsplash.pickerandroid.photopicker.data.UnsplashPhoto
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.functions.Consumer
 import io.reactivex.schedulers.Schedulers
 import kotlincodes.com.retrofitwithkotlin.retrofit.ApiClient
 import kotlinx.android.synthetic.main.activity_home.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import okhttp3.Dispatcher
 import java.io.OutputStream
 
+//CoroutineScope(Dispatchers.Default).launch {
+//
+//}
 class HomeActivity : AppCompatActivity(), ImageCallback {
 
     lateinit var imageDB: ImageDatabase
@@ -68,21 +77,32 @@ class HomeActivity : AppCompatActivity(), ImageCallback {
 
         })
 
+//        CoroutineScope(Dispatchers.Default).launch {
+////            imageDB.imageDAO().getAll()
+//            imageDB.imageDAO().deleteAllImage()
+//        }
 
-        imageDB.imageDAO().getAll()
+        Observable.create<Any> { emitter ->
+            imageDB.imageDAO().deleteAllImage()
+            emitter.onComplete()
+        }.observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                Consumer { arrImage: List<Image> ->
-                    for (item in arrImage)
-                        Log.d(
-                            "001",
-                            "onCreate: image url" + item.id + "  " + item.url + "  " + item.uri
-                        )
-                    Log.d("001", "onCreate:22222222222222222 ")
-                }
+            .subscribe()
 
-            )
+//        imageDB.imageDAO().getAll()
+//            .subscribeOn(Schedulers.io())
+//            .observeOn(AndroidSchedulers.mainThread())
+//            .subscribe(
+//                Consumer { arrImage: List<Image> ->
+//                    for (item in arrImage)
+//                        Log.d(
+//                            "001",
+//                            "onCreate: image url" + item.id + "  " + item.url + "  " + item.uri
+//                        )
+//                    Log.d("001", "onCreate:22222222222222222 ")
+//                }
+//
+//            )
 
 
     }
@@ -94,6 +114,7 @@ class HomeActivity : AppCompatActivity(), ImageCallback {
     }
 
     fun getData() {
+
         compositeDisposable.add(
             ApiClient.getClient.getPhotos(page)
                 .observeOn(AndroidSchedulers.mainThread())
@@ -113,11 +134,13 @@ class HomeActivity : AppCompatActivity(), ImageCallback {
         progress_bar.visibility = View.GONE
         images.addAll(list)
         adapter.setData(images)
+        adapter.notifyDataSetChanged()
     }
 
     private fun onResponseLoadmore(list: ArrayList<UnsplashPhoto?>) {
         images.addAll(list)
         adapter.setData(images)
+        adapter.notifyDataSetChanged()
         isLoading = false
     }
 
@@ -255,32 +278,41 @@ class HomeActivity : AppCompatActivity(), ImageCallback {
                     override fun onResourceReady(
                         resource: Bitmap, transition: Transition<in Bitmap?>?
                     ) {
+//                        CoroutineScope(Dispatchers.Default).launch {
+//                            var uri = MediaStoreUtils.saveImage(
+//                                resource,
+//                                applicationContext,
+//                                unsplashPhoto.id
+//                            )
+//
+//                            imageDB.imageDAO().insert(Image(0, unsplashPhoto.id, uri.toString()))
+//                            adapter.notifyItemChanged(position)
+////                            adapter.notifyDataSetChanged()
+//                        }
 
-                        // save inmage for mediastore
-                        var uri: Uri = MediaStoreUtils.saveImage(
-                            resource,
-                            applicationContext,
-                            unsplashPhoto.id
-                        )
-
-                        // save image for db
-                        imageDB.imageDAO().insert(Image(0, unsplashPhoto.id, uri.toString()))
+//                        lateinit var uri: Uri
+                        Observable.create<Uri> { emitter ->
+                            var uri = MediaStoreUtils.saveImage(
+                                resource,
+                                applicationContext,
+                                unsplashPhoto.id
+                            )
+                            emitter.onNext(uri)
+                            emitter.onComplete()
+                        }.observeOn(AndroidSchedulers.mainThread())
                             .subscribeOn(Schedulers.io())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe({
-                                Log.d("001", "insert success")
-                                adapter.notifyItemChanged(position)
-                            }, { error -> Log.e("001", "insert false", error) })
+                            .subscribe(Consumer {
+                                imageDB.imageDAO().insert(Image(0, unsplashPhoto.id, it.toString()))
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe({
+                                     /*   Log.d("001", "url: "+it.toString())
+                                        Log.d("001", "insert success")*/
+//                                adapter.notifyItemChanged(position)
+                                        //adapter.notifyItemChanged(position)
+                                    }, { error -> Log.e("001", "insert false", error) })
 
-//                        adapter.notifyItemChanged(position)
-
-                        Toast.makeText(
-                            applicationContext,
-                            "Save image Succsufl !",
-                            Toast.LENGTH_SHORT
-                        )
-                            .show()
-//                        adapter.setData(synchronizeData(images))
+                            })
                     }
 
                     override fun onLoadCleared(placeholder: Drawable?) {
